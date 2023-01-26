@@ -1,11 +1,13 @@
 package proje.ayu;
 
 import java.io.File;
-
+import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.math3.analysis.function.Log;
 import org.json.JSONArray;
+import org.json.JSONException;
 import org.json.JSONObject;
 
 
@@ -16,15 +18,42 @@ public class Searching
         System.out.println("**Start**");
         startTime = System.nanoTime();
 
+        filmsJSONArray();
+
+        endTime = System.nanoTime();
+        System.out.println("filmsJSONArray dizisini oluşturmak için geçen süre: "+((endTime - startTime)/1000000)+" ms");
+        System.out.println("************************");
+        
+        
+
+
+        startTime = System.nanoTime();
+        filmsGenreSearch2("Drama","Sports","and");
+
+        endTime = System.nanoTime();
+        System.out.println("aranan Drama türünde olan film bilgileri için geçen süre: "+((endTime - startTime)/1000000)+" ms");
+        System.out.println("************************");        
+
+/* 
+        startTime = System./nanoTime();
+        filmsDirectorSearch("David Yates");
+
+        endTime = System.nanoTime();
+        System.out.println("aranan yönetmenin film bilgileri için geçen süre: "+((endTime - startTime)/1000000)+" ms");
+        System.out.println("************************"); 
+        startTime = System./nanoTime();      
+
         //genre {kategori} dizilerini oluşturur
         readJSONArray2();
         endTime = System.nanoTime();
         System.out.println("readJSONArray2 için geçen süre: "+((endTime - startTime)/1000000)+" ms");
         System.out.println("************************");
+        /*
         startTime = System.nanoTime();
         genrePrint();
         endTime = System.nanoTime();
         System.out.println("println için geçen süre: "+((endTime - startTime)/1000000)+" ms");
+       
         System.out.println("************************");
         startTime = System.nanoTime();
         
@@ -37,6 +66,7 @@ public class Searching
         genreSort();
         endTime = System.nanoTime();
         System.out.println("genreSort için geçen süre: "+((endTime - startTime)/1000000)+" ms");
+        /* 
         System.out.println("************************");
         startTime = System.nanoTime();        
         genrePrint(); 
@@ -49,16 +79,20 @@ public class Searching
         System.out.println("minGenre için geçen süre: "+((endTime - startTime)/1000000)+" ms");
         System.out.println("****End****");
 
-        
+       */ 
 
     }
 
     static String[] genreArray= new String [212];
     static int[] genreArrayCount= new int [212];
 
+    static ArrayList<JSONObject> filmsArrays = new ArrayList<JSONObject>(); //json films objesini jsonarray'e çevir
+
     static int typeCount=0;
     static int searchingCount=0;
     static long startTime =0, endTime=0;
+
+    
 
     //JSON içinden film kategorileri bir diziye aktarır. Kategorilerin içerdiği film sayılarını aynı index numaraası ile başka bir dizide tutar.
     private static void readJSONArray2() throws Exception {
@@ -84,6 +118,92 @@ public class Searching
         }
 
     }
+ //JSON içinden film kategorileri bir diziye aktarır. Kategorilerin içerdiği film sayılarını aynı index numaraası ile başka bir dizide tutar.
+ private static void filmsJSONArray() throws Exception {
+
+    File file = new File("src/films2.json");
+    String content = FileUtils.readFileToString(file, "utf-8");
+
+    JSONObject myjson = new JSONObject(content);
+    JSONArray the_json_array = myjson.getJSONArray("films");
+
+    int size = the_json_array.length();
+    
+    for (int i = 0; i < size; i++) {
+        JSONObject another_json_object = the_json_array.getJSONObject(i);
+            //Blah blah blah...
+            filmsArrays.add(another_json_object);
+    }
+
+    //Finally
+    JSONObject[] jsons = new JSONObject[filmsArrays.size()];
+    filmsArrays.toArray(jsons);
+    
+}
+
+private static void filmsGenreSearch(String genre){
+    int say=0;
+    for(int i=0;i<filmsArrays.size();i++){
+        //System.out.println(filmsArrays.get(i).getJSONArray("directed_by").length()); 
+        for(int j=0;j<filmsArrays.get(i).getJSONArray("genre").length();j++)
+            if(filmsArrays.get(i).getJSONArray("genre").get(j).equals(genre)){
+                System.out.println(filmsArrays.get(i));
+                say++;
+                
+            }
+    }
+    System.out.println(genre + " film türünde film sayısı:"+say);
+}
+private static void filmsGenreSearch2(String genre1, String genre2, String op){
+    int say=0;
+    if(op=="or"){
+        for(int i=0;i<filmsArrays.size();i++){
+            //System.out.println(filmsArrays.get(i).getJSONArray("directed_by").length());    
+            for(int j=0;j<filmsArrays.get(i).getJSONArray("genre").length();j++)
+                if(filmsArrays.get(i).getJSONArray("genre").get(j).equals(genre1) || filmsArrays.get(i).getJSONArray("genre").get(j).equals(genre2)){
+                    System.out.println(filmsArrays.get(i));
+                    say++;               
+                }
+                
+        }
+    }else if(op=="and"){
+       
+        for(int i=0;i<filmsArrays.size();i++){
+            Boolean isGenre1=false,isGenre2=false;
+            //System.out.println(filmsArrays.get(i).getJSONArray("directed_by").length());    
+            for(int j=0;j<filmsArrays.get(i).getJSONArray("genre").length();j++){
+                
+                if(filmsArrays.get(i).getJSONArray("genre").get(j).equals(genre1)){
+                   
+                    isGenre1=true;                                
+                }
+                if(filmsArrays.get(i).getJSONArray("genre").get(j).equals(genre2)){
+                    
+                    isGenre2=true;                                
+                } 
+                if(isGenre1.equals(true) && isGenre2.equals(true)){
+                    System.out.println(filmsArrays.get(i));
+                    say++;
+                }
+            }
+
+                
+        }
+    }
+    System.out.println(genre1+ "," +genre2+ ","+op + " film türünde film sayısı:"+say);
+}
+
+private static void filmsDirectorSearch(String director){
+    System.out.println(filmsArrays.size());
+    for(int i=0;i<filmsArrays.size();i++){
+        //System.out.println(filmsArrays.get(i).getJSONArray("directed_by").length());
+        for(int j=0;j<filmsArrays.get(i).getJSONArray("directed_by").length();j++)
+            if(filmsArrays.get(i).getJSONArray("directed_by").get(j).equals(director));
+                //System.out.println(filmsArrays.get(i));
+    }
+}
+
+
 
     //Kategori dizisi içinde JSON'dan gelen kategorinin olup olmadığına bakar. Varsa kategori sayacını bir arttırır
     public static boolean serachInArray(String type) {
